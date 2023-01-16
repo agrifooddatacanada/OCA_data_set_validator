@@ -65,6 +65,3 @@ if __name__ == "__main__":
     oca_bee_example = OCABundle(bee_example_path)
     while True:
         print(oca_bee_example.get_file(input()))
-
-
-
