@@ -2,7 +2,13 @@
 
 from zipfile import ZipFile
 import json
-from pathlib import PurePath, PurePosixPath
+from pathlib import Path
+
+
+META_FILE = "meta.json"
+CB_NAME = "capture_base"
+CB_KEY = "root"
+FILES_KEY = "files"
 
 
 # A loaded OCA bundle from OCA zip files. 
@@ -30,23 +36,22 @@ class OCABundle:
         ######################################################################
 
         # Slash auto correction based on current system.
-        bundle_path = PurePath(path_str)
+        bundle_path = Path(path_str)
         
         # The OCA bundle file name without extension.
+        # This was for navigating in the zip file. Currently not used.
         bundle_name = bundle_path.name.rsplit(".", 1)[0]    
-        
-        meta_path = bundle_name + "/JSON/meta.json"
-        files_path = bundle_name + "/JSON/"
 
         with ZipFile(bundle_path, "r") as bundle:
             # Loads meta file.
-            with bundle.open(meta_path) as meta_json:
+            with bundle.open(META_FILE) as meta_json:
                 self.meta = json.load(meta_json)
 
             # Loads all other files, including capture base and overlays.
-            self.files_dict = self.meta["files"][self.meta["root"]]
+            self.files_dict = self.meta[FILES_KEY][self.meta[CB_KEY]]
+            self.files_dict[CB_NAME] = self.meta[CB_KEY]
             for file_name in self.files_dict.values():
-                with bundle.open(files_path + file_name + ".json") as file:
+                with bundle.open(file_name + ".json") as file:
                     self.files[file_name] = json.load(file)
 
     def get_file(self, file_name):
@@ -55,13 +60,12 @@ class OCABundle:
         elif file_name in self.files_dict:
             return self.files[self.files_dict[file_name]]            
         else:
-            # error
-            pass
+            raise Exception("Wrong file name")
 
 
 if __name__ == "__main__":
 
-    bee_example_path = "../OCA test sets/Example_data_bee.zip"
-    oca_bee_example = OCABundle(bee_example_path)
+    example_path = "../OCA_test_sets/Example_data_1.zip"
+    oca_example = OCABundle(example_path)
     while True:
-        print(oca_bee_example.get_file(input()))
+        print(oca_example.get_file(input()))
