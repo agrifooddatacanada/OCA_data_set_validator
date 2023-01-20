@@ -1,4 +1,4 @@
-# oca2py.py
+# oca_bundle.py
 
 from zipfile import ZipFile
 import json
