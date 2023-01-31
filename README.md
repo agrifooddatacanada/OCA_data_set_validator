@@ -2,5 +2,7 @@
 Python data validation tool that uses OCA to validate a researcher’s data set.
 
 ### Requirements:
-~~tkinter (currently not needed, only for file explorer)~~
 
+- Python 3
+- pandas
+- ~~tkinter (currently not needed, only for file explorer)~~
