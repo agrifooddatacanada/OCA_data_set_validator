@@ -156,13 +156,23 @@ def match_datetime(pattern, data_str):
         for i in iso_conv:
             py_str = py_str.replace(i, iso_conv[i])
         return py_str
-    # to do: duration 
-    pattern = iso2py(pattern)
-    try:
-        datetime.strptime(data_str, pattern)
-    except:
-        return False
-    return True
+    
+    if "/" in pattern:
+        if "/" not in data_str:
+            return False
+        else:
+            return match_datetime(pattern.split("/")[0], data_str.split("/")[0]) and \
+                   match_datetime(pattern.split("/")[1], data_str.split("/")[1])
+    elif pattern[0] == "P" or pattern[0] == "R":
+        return match_regex("^" + pattern.replace("n", "[0-9]+") + "$", data_str)
+    else:
+        pattern = iso2py(pattern)
+        try:
+            datetime.strptime(data_str, pattern)
+        except:
+            return False
+        return True
+
 
 def match_regex(pattern, data_str):
     return bool(re.search(pattern, data_str))
@@ -172,29 +182,9 @@ def match_boolean(data_str):
                         "False", "false", "F", "f", "0", "n", "no"]
 
 
-xls_path = "../OCA_test_sets/Example_data_bee/test_data_set.xlsx"
-csv_path = "../OCA_test_sets/Example_data_bee/test_data_set.csv"
-bundle_path = "../OCA_test_sets/Example_data_bee/test_bundle.zip"
-
-bd1 = "../"
-bd2 = "../"
-
-csv1 = "../"
-csv2 = "../"
-
-
 if __name__ == "__main__":
     test_bd = OCABundle(bundle_path)
     # test_bd.validate(OCADataSet.from_path(xls_path))
     test_bd.validate(OCADataSet.from_path(csv_path))
     # test_bd.validate(OCADataSet(pd.read_csv(csv_path)))
-
-    py_bd1 = OCABundle(bd1)
-    py_bd2 = OCABundle(bd2)
-
-    py_csv1 = OCADataSet.from_path(csv1) 
-    py_csv2 = OCADataSet.from_path(csv2) 
-
-    py_bd1.validate(py_csv1)
-    py_bd2.validate(py_csv2)
 
