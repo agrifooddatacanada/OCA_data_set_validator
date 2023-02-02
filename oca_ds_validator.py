@@ -80,6 +80,11 @@ class OCADataSetErr:
                 self.err_rows.add(i)
             if self.ecode_err.errs[ec]:
                 self.err_cols.add(ec)
+
+    def get_format(self):
+        return self.format_err.errs
+    def get_ecode(self):
+        return self.ecode_err.errs
     
 
 # A loaded OCA bundle from OCA zip files. 
@@ -245,7 +250,8 @@ bundle_path = "../OCA_test_sets/Example_data_bee/test_bundle.zip"
 
 if __name__ == "__main__":
     test_bd = OCABundle(bundle_path)
-    # test_bd.validate(OCADataSet.from_path(xls_path))
-    test_bd.validate(OCADataSet.from_path(csv_path)).overview()
-    # test_bd.validate(OCADataSet(pd.read_csv(csv_path)))
+    test_rslt = test_bd.validate(OCADataSet.from_path(csv_path))
+    test_rslt.overview()
+    # print(test_rslt.get_format())
+    # print(test_rslt.get_ecode())
 
