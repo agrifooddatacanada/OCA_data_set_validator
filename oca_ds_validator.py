@@ -8,50 +8,74 @@ from datetime import datetime
 import re
 
 
+# Names of OCA bundle dictionary keys.
+# Do not change unless there are any key errors.
 META_FILE = "meta.json"
-CB_NAME = "capture_base"
-CB_KEY = "root"
+CB_KEY = "capture_base"
+ROOT_KEY = "root"
 FILES_KEY = "files"
-ATTR_NAME = "attributes"
-FORMAT_NAME = "format"
-ATTR_FORMAT_NAME = "attribute_formats"
-EC_NAME = "entry_code"
-ATTR_EC_NAME = "attribute_entry_codes"
+TYPE_KEY = "type"
+ATTR_KEY = "attributes"
+FORMAT_KEY = "format"
+ATTR_FORMAT_KEY = "attribute_formats"
+CONF_KEY = "conformance"
+ATTR_CONF_KEY = "attribute_conformance"
+EC_KEY = "entry_code"
+ATTR_EC_KEY = "attribute_entry_codes"
+FLAG_KEY = "flagged_attributes"
 
-DATA_ENTRY_SHEET_NAME = "schema conformant data"
+# The tab name in the Excel Data Entry File.
+# Do not change unless there are any Excel parsing errors.
+DATA_ENTRY_SHEET_KEY = "schema conformant data"
+
+# Error messages. For text notices only.
+MISSING_MSG = "Missing mandatory attribute."
+NOT_A_LIST_MSG = "Valid array required."
+FORMAT_ERR_MSG = "Format mismatch."
+EC_ERR_MSG = "One of the entry codes required."
+
+# The version number of the OCA Specification this validator is developed with.
+OCA_VERSION = "1.0"
 
 
+# The class represents an OCA Data Set to be validated.
 class OCADataSet:
     
     # (Defaultly) Load an OCA data set from pandas Data Frame.
     def __init__(self, ds_pd: pd.DataFrame = pd.DataFrame()):
         self.data = ds_pd
     
-    # Load an OCA data set from OCA Data Entry File (which is a xls file) or csv file.
+    # Load an OCA data set from OCA Excel Data Entry File or csv file.
     @classmethod
     def from_path(cls, ds_path_str: str):
         ds_path = Path(ds_path_str)
-        if ".xls" in ds_path.name:
-            return cls(pd.read_excel(ds_path, sheet_name = DATA_ENTRY_SHEET_NAME))
+        if ".xls" in ds_path.name:  # .xls or .xlsx
+            return cls(pd.read_excel(ds_path, 
+                                     sheet_name = DATA_ENTRY_SHEET_KEY))
         elif ".csv" in ds_path.name:
             return cls(pd.read_csv(ds_path))
         else:
             raise Exception("Not supported data set file type")
     
 
+# The class represents a result set for any kinds of OCA Data Set Validation.
 class OCADataSetErr:
-
+    
+    # Missing or misnamed attributes
     class AttributeErr:
         def __init__(self):
            self.errs = [] 
+    # Attribute type or attribute format errors
     class FormatErr:
         def __init__(self):
            self.errs = {}  
+    # Not matching any of the entry codes
     class EntryCodeErr:
         def __init__(self):
            self.errs = {} 
 
     def __init__(self):
+
         self.attr_err = OCADataSetErr.AttributeErr()
         self.format_err = OCADataSetErr.FormatErr()
         self.ecode_err = OCADataSetErr.EntryCodeErr() 
@@ -59,6 +83,8 @@ class OCADataSetErr:
         self.err_cols = set()
         self.err_rows = set()
 
+    # Minimal error information. Could be effective when there are only a few
+    # errors in a few attributes.
     def overview(self):
         self.update_err()
         if (not self.err_cols) and (not self.err_rows):
@@ -68,7 +94,20 @@ class OCADataSetErr:
         else:
             print("Found", len(self.err_rows), 
                   "problematic row(s) in the following column(s):", self.err_cols)  
+        print()
 
+    # Detailed error information about the first column with errors.
+    def first_err_col(self):
+        self.update_err()
+        if not self.err_cols:
+            print("No error was found.")
+        else:
+            first_col = sorted(list(self.err_cols))[0]
+            print("The first problematic column is:", first_col)
+            self.get_err_col(first_col)
+        print()
+
+    # Update the problematic column and row information.
     def update_err(self):
         for ec in self.format_err.errs:
             for i in self.format_err.errs[ec]:
@@ -81,11 +120,29 @@ class OCADataSetErr:
             if self.ecode_err.errs[ec]:
                 self.err_cols.add(ec)
 
-    def get_format(self):
+    def get_format_err(self):
         return self.format_err.errs
-    def get_ecode(self):
+    def get_ecode_err(self):
         return self.ecode_err.errs
-    
+
+    def get_err_col(self, attr_name):
+        self.update_err()
+        if not self.err_cols:
+            print("No error was found.")
+        else:
+            if attr_name in self.get_format_err():
+                print("Format error(s) would occur in the following rows:")
+                for row in self.get_format_err()[attr_name]:
+                    print("row", row, ":", self.get_format_err()[attr_name][row])
+            else:
+                print("No format error found in the column.")
+
+            if attr_name in self.get_ecode_err():
+                print("Entry code error(s) would occur in the following rows:")
+                for row in self.get_ecode_err()[attr_name]:
+                    print("row", row, ":", self.get_ecode_err()[attr_name][row])
+            else:
+                print("No entry code error found in the column.")
 
 # A loaded OCA bundle from OCA zip files. 
 class OCABundle:
@@ -124,8 +181,8 @@ class OCABundle:
                 self.meta = json.load(meta_json)
 
             # Loads all other files, including capture base and overlays.
-            self.files_dict = self.meta[FILES_KEY][self.meta[CB_KEY]]
-            self.files_dict[CB_NAME] = self.meta[CB_KEY]
+            self.files_dict = self.meta[FILES_KEY][self.meta[ROOT_KEY]]
+            self.files_dict[CB_KEY] = self.meta[ROOT_KEY]
             for file_name in self.files_dict.values():
                 with bundle.open(file_name + ".json") as file:
                     self.files[file_name] = json.load(file)
@@ -138,17 +195,44 @@ class OCABundle:
         else:
             raise Exception("Wrong file name")
     
+    def get_file_version(self, file_name):
+        file_keys = self.get_file(file_name)
+        if TYPE_KEY in file_keys:
+            return file_keys[TYPE_KEY].split("/")[-1]
+        else:
+            return None
+
     def get_attributes(self):
-        return self.get_file(CB_NAME)[ATTR_NAME]
+        return self.get_file(CB_KEY)[ATTR_KEY]
 
     def get_attribute_type(self, attribute_name):
         return self.get_attributes()[attribute_name]
     
     def get_attribute_format(self, attribute_name):
-        return self.get_file(FORMAT_NAME)[ATTR_FORMAT_NAME][attribute_name]
+        try:
+            formats = self.get_file(FORMAT_KEY)[ATTR_FORMAT_KEY]
+            attr_format = formats[attribute_name]
+        except (Exception, KeyError):
+            return None
+        else:
+            return attr_format
+
+    def get_attribute_conformance(self, attribute_name):
+        try:
+            conformance = self.get_file(CONF_KEY)[ATTR_CONF_KEY]
+            attr_conformance = conformance[attribute_name]
+        except (Exception, KeyError) as err:
+            return False
+        else:
+            return attr_conformance == 'M'
 
     def get_entry_codes(self):
-        return self.get_file(EC_NAME)[ATTR_EC_NAME]
+        try:
+            ecodes = self.get_file(EC_KEY)[ATTR_EC_KEY]
+        except Exception:
+            return []
+        else:
+            return ecodes
 
     def validate_attribute(self, data_set: OCADataSet) -> OCADataSetErr.AttributeErr:
         rslt = OCADataSetErr.AttributeErr()
@@ -158,22 +242,35 @@ class OCABundle:
     def validate_format(self, data_set: OCADataSet) -> OCADataSetErr.FormatErr:
         rslt = OCADataSetErr.FormatErr()
         for attr in self.get_attributes():
-            rslt.errs[attr] = []
+            rslt.errs[attr] = {}
             attr_type = self.get_attribute_type(attr)
             attr_format = self.get_attribute_format(attr)
+            attr_conformance = self.get_attribute_conformance(attr)
             for i in range(len(data_set.data)):
                 data_entry = data_set.data[attr][i]
-                if pd.isna(data_entry):
-                    pass 
-                elif attr_type == "DateTime":
-                    if not match_datetime(attr_format, data_entry):
-                        rslt.errs[attr].append(i)
-                elif attr_type == "Numeric" or attr_type == "Text":
-                    if not match_regex(attr_format, str(data_entry)):
-                        rslt.errs[attr].append(i)
-                elif attr_type == "Boolean":
-                    if not match_boolean(data_entry):
-                        rslt.errs[attr].append(i)
+                if not pd.isna(data_entry):
+                    data_entry = str(data_entry)
+                elif attr_conformance:
+                    rslt.errs[attr][i] = MISSING_MSG
+                    continue
+                else:
+                    data_entry = ""
+
+                if "Array" in attr_type:
+                    try:
+                        data_arr = json.loads(data_entry)
+                    except json.decoder.JSONDecodeError:
+                        rslt.errs[attr][i] = NOT_A_LIST_MSG
+                        continue
+                    if type(data_arr) != list:
+                        rslt.errs[attr][i] = NOT_A_LIST_MSG
+                        continue
+                    for data_item in data_arr:
+                        if not match_format(attr_type, attr_format, str(data_item)):
+                            rslt.errs[attr][i] = FORMAT_ERR_MSG
+                            break
+                elif not match_format(attr_type, attr_format, data_entry):
+                    rslt.errs[attr][i] = FORMAT_ERR_MSG
                 else:
                     pass
         return rslt
@@ -182,21 +279,39 @@ class OCABundle:
         rslt = OCADataSetErr.EntryCodeErr() 
         attr_entry_codes = self.get_entry_codes()
         for attr in attr_entry_codes:
-            rslt.errs[attr] = [] 
+            rslt.errs[attr] = {}
             for i in range(len(data_set.data)):
                 data_entry = data_set.data[attr][i]
                 if str(data_entry) not in attr_entry_codes[attr]:
-                    rslt.errs[attr].append(i)
+                    rslt.errs[attr][i] = EC_ERR_MSG
         return rslt
 
-    def flagged_alarm(self, data_set: OCADataSet):
-        if "flagged_attributes" in self.get_file(CB_NAME):
-            for attr in self.get_file(CB_NAME)["flagged_attributes"]:
-                print("Contains flagged data. Check", attr)
+    def flagged_alarm(self):
+        if FLAG_KEY in self.get_file(CB_KEY):
+            print("Contains flagged data. Please check the following attribute(s):")
+            for attr in self.get_file(CB_KEY)[FLAG_KEY]:
+                print(attr)
+            print()
 
-    def validate(self, data_set: OCADataSet) -> OCADataSetErr:
-        print(data_set.data)
-        self.flagged_alarm(data_set)
+    def version_alarm(self):
+        for overlay_file in self.files_dict:
+            file_ver = self.get_file_version(overlay_file)
+            if file_ver and file_ver != OCA_VERSION:
+                print("Warning: overlay", overlay_file, 
+                      "has a different OCA specification version.")
+        print()
+
+    def validate(self, data_set: OCADataSet,
+                 show_data_preview = False, 
+                 enable_flagged_alarm = True, 
+                 enable_version_alarm = True) -> OCADataSetErr:
+        if show_data_preview:
+            print(data_set.data)
+            print()
+        if enable_flagged_alarm:
+            self.flagged_alarm()
+        if enable_version_alarm:
+            self.version_alarm()
         rslt = OCADataSetErr()
         rslt.attr_err = self.validate_attribute(data_set)
         rslt.format_err = self.validate_format(data_set)
@@ -219,6 +334,9 @@ def match_datetime(pattern, data_str):
             py_str = py_str.replace(i, iso_conv[i])
         return py_str
     
+    if not pattern:
+        return True
+
     if "/" in pattern:
         if "/" not in data_str:
             return False
@@ -236,22 +354,39 @@ def match_datetime(pattern, data_str):
         return True
 
 def match_regex(pattern, data_str):
+    if not pattern:
+        return True
     return bool(re.search(pattern, data_str))
 
 def match_boolean(data_str):
-    return data_str in ["True",  "true",  "T", "t", "1", "y", "yes", 
-                        "False", "false", "F", "f", "0", "n", "no"]
+    return data_str in ["True",  "true",  "TRUE",  "T", "1", "1.0", 
+                        "False", "false", "FALSE", "F", "0", "0.0"]
+
+def match_format(attr_type, pattern, data_str):
+    if "DateTime" in attr_type:
+        return match_datetime(pattern, data_str)
+    elif "Numeric" in attr_type or "Text" in attr_type:
+        return match_regex(pattern, data_str)
+    elif "Boolean" in attr_type:
+        return match_boolean(data_str)
+    else:
+        return True
 
 
-xls_path = "../OCA_test_sets/Example_data_bee/test_data_set.xlsx"
-csv_path = "../OCA_test_sets/Example_data_bee/test_data_set.csv"
-bundle_path = "../OCA_test_sets/Example_data_bee/test_bundle.zip"
+ds_path = "./data_entry.xlsx"
+bundle_path = "./bundle.zip"
 
 
 if __name__ == "__main__":
     test_bd = OCABundle(bundle_path)
-    test_rslt = test_bd.validate(OCADataSet.from_path(csv_path))
+    test_ds = OCADataSet.from_path(ds_path)
+    # test_rslt = test_bd.validate(test_ds)
+    test_rslt = test_bd.validate(test_ds, True, False, False)
+    
     test_rslt.overview()
-    # print(test_rslt.get_format())
-    # print(test_rslt.get_ecode())
+    test_rslt.first_err_col()
+    # test_rslt.get_err_col("num_arr_attr")
+    
+    # print(test_rslt.get_format_err())
+    # print(test_rslt.get_ecode_err())
 
