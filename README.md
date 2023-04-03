@@ -47,6 +47,15 @@ test_rslt = test_bundle.validate(test_data)
 #########################################################################################
 ```
 
+### Optional Messages
+There are three optional boolean arguments to control the message printed.
+| argument | default value | usage |
+| -------- | ------------- | ----- |
+| `show_data_preview` | `False` | If enabled, prints a pandas preview of the data set before validation. |
+| `enable_flagged_alarm` | `True` | If enabled, prints a warning message for the existence of flagged attributes. |  
+| `enable_version_alarm` | `True` | If enabled, prints a warning message for each overlay that contains an OCA version number different from the development version of this script (1.0).
+
+
 ### Result Observation
 The errors of the data set is stored in the generated `OCADataSetErr` class.
 
