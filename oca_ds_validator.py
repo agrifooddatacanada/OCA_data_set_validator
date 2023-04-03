@@ -58,7 +58,7 @@ class OCADataSet:
             raise Exception("Not supported data set file type")
     
 
-# The class represents a result set for any kinds of OCA Data Set Validation.
+# The class represents a result set for any kind of OCA Data Set Validation.
 class OCADataSetErr:
     
     # Missing or misnamed attributes
@@ -168,7 +168,7 @@ class OCABundle:
         #                      ("all files","*.*")))
         ######################################################################
 
-        # Slash auto correction based on current system.
+        # Slash auto correction based on the current system.
         bundle_path = Path(bundle_path_str)
         
         # The OCA bundle file name without extension.
@@ -186,7 +186,8 @@ class OCABundle:
             for file_name in self.files_dict.values():
                 with bundle.open(file_name + ".json") as file:
                     self.files[file_name] = json.load(file)
-
+    
+    # Produces a dictionary of JSON file of file_name.
     def get_file(self, file_name):
         if file_name == "meta":
             return self.meta
@@ -195,6 +196,7 @@ class OCABundle:
         else:
             raise Exception("Wrong file name")
     
+    # Gets the OCA spec version number from overlay type.
     def get_file_version(self, file_name):
         file_keys = self.get_file(file_name)
         if TYPE_KEY in file_keys:
@@ -202,12 +204,15 @@ class OCABundle:
         else:
             return None
 
+    # Returns a dictionary of all attributes with their types as values.
     def get_attributes(self):
         return self.get_file(CB_KEY)[ATTR_KEY]
 
+    # Returns the attribute type of a certain attribute.
     def get_attribute_type(self, attribute_name):
         return self.get_attributes()[attribute_name]
     
+    # Returns the format value of a certain attribute.
     def get_attribute_format(self, attribute_name):
         try:
             formats = self.get_file(FORMAT_KEY)[ATTR_FORMAT_KEY]
@@ -217,6 +222,7 @@ class OCABundle:
         else:
             return attr_format
 
+    # Returns the Conformance Overlay value of a certain attribute.
     def get_attribute_conformance(self, attribute_name):
         try:
             conformance = self.get_file(CONF_KEY)[ATTR_CONF_KEY]
@@ -226,19 +232,23 @@ class OCABundle:
         else:
             return attr_conformance == 'M'
 
+    # Returns a dictionary of all attributes, with lists of entry codes as values.
     def get_entry_codes(self):
         try:
             ecodes = self.get_file(EC_KEY)[ATTR_EC_KEY]
         except Exception:
-            return []
+            return {}
         else:
             return ecodes
 
+    # Validates the number and name of all attributes.
     def validate_attribute(self, data_set: OCADataSet) -> OCADataSetErr.AttributeErr:
         rslt = OCADataSetErr.AttributeErr()
         rslt.errs = [i for i in list(data_set.data) if i not in self.get_attributes()]
         return rslt
 
+    # Validates all attributes for format values.
+    # Also checks for any missing mandatory attributes.
     def validate_format(self, data_set: OCADataSet) -> OCADataSetErr.FormatErr:
         rslt = OCADataSetErr.FormatErr()
         for attr in self.get_attributes():
@@ -275,6 +285,7 @@ class OCABundle:
                     pass
         return rslt
 
+    # Validates all attributes for the value of entry codes.
     def validate_entry_code(self, data_set: OCADataSet) -> OCADataSetErr.EntryCodeErr:
         rslt = OCADataSetErr.EntryCodeErr() 
         attr_entry_codes = self.get_entry_codes()
@@ -286,6 +297,7 @@ class OCABundle:
                     rslt.errs[attr][i] = EC_ERR_MSG
         return rslt
 
+    # Print warning messages for any flagged attributes.
     def flagged_alarm(self):
         if FLAG_KEY in self.get_file(CB_KEY):
             print("Contains flagged data. Please check the following attribute(s):")
@@ -293,6 +305,7 @@ class OCABundle:
                 print(attr)
             print()
 
+    # Prints warning messages for any overlays with a different version number.
     def version_alarm(self):
         for overlay_file in self.files_dict:
             file_ver = self.get_file_version(overlay_file)
@@ -301,6 +314,7 @@ class OCABundle:
                       "has a different OCA specification version.")
         print()
 
+    # Validates all attributes.
     def validate(self, data_set: OCADataSet,
                  show_data_preview = False, 
                  enable_flagged_alarm = True, 
