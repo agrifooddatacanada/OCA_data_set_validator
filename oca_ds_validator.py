@@ -7,6 +7,13 @@ import pandas as pd
 from datetime import datetime
 import re
 
+##############################################################################
+# Author: Xingjian Xu from Agri-food Data Canada 
+#                          (https://agrifooddatacanada.ca/)
+# GitHub Repo: https://github.com/agrifooddatacanada/OCA_data_set_validator
+# OCA Spec Version: v1.0.0
+##############################################################################
+OCA_VERSION = "1.0"
 
 # Names of OCA bundle dictionary keys.
 # Do not change unless there are any key errors.
@@ -33,9 +40,6 @@ MISSING_MSG = "Missing mandatory attribute."
 NOT_A_LIST_MSG = "Valid array required."
 FORMAT_ERR_MSG = "Format mismatch."
 EC_ERR_MSG = "One of the entry codes required."
-
-# The version number of the OCA Specification this validator is developed with.
-OCA_VERSION = "1.0"
 
 
 # The class represents an OCA Data Set to be validated.
