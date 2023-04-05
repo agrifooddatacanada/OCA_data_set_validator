@@ -1,5 +1,5 @@
 # OCA Data Set Validator
-This is a Python script for validating [Overlays Capture Architecture (OCA)](https://oca.colossi.network/) data sets. It includes three classes: `OCADataSet`, `OCADataSetErr`, and `OCABundle`.
+This is a Python script for validating [Overlays Capture Architecture (OCA)](https://oca.colossi.network/) data sets. It includes three classes: `OCADataSet`, `OCADataSetErr`, and `OCABundle`. For more information about OCA, please check [OCA Specification v1.0.0](https://oca.colossi.network/specification/).
 
 - `OCADataSet` represents an OCA data set to be validated, and can be loaded from a pandas DataFrame, an OCA Excel Data Entry File, or a CSV file.
 
@@ -41,7 +41,7 @@ test_rslt = test_bundle.validate(test_data)
 #      'num_arr_attr': {1: 'Format mismatch.', 2: 'Valid array required.'}, 
 #      'text_arr_entry_attr': {}, 
 #      'text_entry_attr': {}}
-#   encode_err:  # Not matching any of the entry codes
+#   ecode_err:  # Not matching any of the entry codes
 #     {'text_arr_entry_attr': {0: 'One of the entry codes required.'},
 #      'text_entry_attr': {2: 'One of the entry codes required.'}}
 #########################################################################################
@@ -88,7 +88,26 @@ test_rslt.get_err_col("bool_attr")  # Prints the information of some certain col
 
 ### Further Processing
 ```Python
-# Get dictionaries of error details.
+# Get objects of full error details. 
+# You may find it useful for data visualization or further analysis.
+test_rslt.attr_err
 test_rslt.get_format_err()
 test_rslt.get_ecode_err()
 ```
+
+## Development Status
+
+Currently, this script is developed for the validation of the following [OCA attribute types](https://oca.colossi.network/specification/#attribute-type): 
+- Text (with regular expressions)
+- DateTime (with ISO 8601 formats)
+- Array[Type]; for any Types that are not mentioned above, only the validness of the array will be checked. 
+
+Also, besides the format overlay, the data set will be validated with the following overlays:
+- [Conformance Overlay](https://oca.colossi.network/specification/#conformance-overlay), for any missing mandatory data
+- [Entry Code Overlay](https://oca.colossi.network/specification/#entry-code-overlay), for any data that mismatches entry codes
+
+JSON data types are **NOT** validated due to the type coercion while importing Excel or CSV files. We also recommend that you import the data set as Pandas DataFrame to prevent unexpected DateTime formatting by software such as Microsoft Excel.
+
+Any validation errors other than the above are **NOT** guaranteed to be filtered by this script. Please feel free to contact us with any suggestions for future development.
+
+You could also found a well-developed [OCA Validator](https://github.com/THCLab/oca-conductor) by [The Human Colossus Lab](https://github.com/THCLab) (Rust required).
