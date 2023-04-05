@@ -33,17 +33,17 @@ test_data = OCADataSet(data_set_dataframe)
 test_rslt = test_bundle.validate(test_data)
 #########################################################################################
 # Example of a possible test_rslt:
-#   attr_err:    # Missing or misnamed attributes
-#     []
-#   format_err:  # Attribute type or attribute format errors
-#     {'bool_arr_attr': {1: 'Valid array required.'}, 
-#      'bool_attr': {2: 'Format mismatch.'}, 
-#      'num_arr_attr': {1: 'Format mismatch.', 2: 'Valid array required.'}, 
-#      'text_arr_entry_attr': {}, 
-#      'text_entry_attr': {}}
+#   attr_err:
+#     ['missing_attribute', 'misnamed_attribute']
+#   format_err:
+#     {'attribute_with_format_error_on_row_0': {0: 'Format mismatch.'}, 
+#      'array_attribute_without_array_data_on_row_0': {0: 'Valid array required.'}, 
+#      'attribute_with_format_error_on_row_42': {42: 'Format mismatch.'}, 
+#      'attribute_with_errors_on_row_0_and_1': {0: 'Format mismatch.', 1: 'Valid array required.'}, 
+#      'mandatory_attribute_with_missing_data': {0: 'Missing mandatory attribute.'},
+#      'attribute_without_error': {}}
 #   ecode_err:  # Not matching any of the entry codes
-#     {'text_arr_entry_attr': {0: 'One of the entry codes required.'},
-#      'text_entry_attr': {2: 'One of the entry codes required.'}}
+#     {'attribute_with_entry_codes': {0: 'One of the entry codes required.'}}
 #########################################################################################
 ```
 
@@ -60,28 +60,32 @@ There are three optional boolean arguments to control the message printed.
 The errors of the data set is stored in the generated `OCADataSetErr` class.
 
 ```Python
-test_rslt.overview()  # Prints a brief summary of errors.
+# Prints a brief summary of errors.
+test_rslt.overview()  
 #########################################################################################
-# Found 8 problematic row(s) in the following column(s): 
-# {'bool_attr', 
-#  'text_arr_entry_attr', 
-#  'bool_arr_attr', 
-#  'text_entry_attr', 
-#  'num_arr_attr'}
+# Found 3 problematic row(s) in the following column(s): 
+# {'attribute_with_format_error_on_row_0', 
+#  'array_attribute_without_array_data_on_row_0', 
+#  'attribute_with_format_error_on_row_42', 
+#  'attribute_with_errors_on_row_0_and_1', 
+#  'mandatory_attribute_with_missing_data',
+#  'attribute_with_entry_codes'}
 #########################################################################################
 
-test_rslt.first_err_col()  # Prints the information of the first problematic column.
+# Prints the information of the first problematic column.
+test_rslt.first_err_col()  
 #########################################################################################
-# The first problematic column is: bool_arr_attr
+# The first problematic column is: attribute_with_format_error_on_row_0
 # Format error(s) would occur in the following rows:
-# row 1 : Valid array required.
+# row 0 : Format mismatch.
 # No entry code error found in the column.
 #########################################################################################
 
-test_rslt.get_err_col("bool_attr")  # Prints the information of some certain column.
+# Prints the information of some certain column.
+test_rslt.get_err_col("attribute_with_format_error_on_row_42")  
 #########################################################################################
-# Format error(s) would occur in the following rows of column bool_attr:
-# row 2 : Format mismatch.
+# Format error(s) would occur in the following rows of column attribute_with_format_error_on_row_42:
+# row 42 : Format mismatch.
 # No entry code error found in the column.
 #########################################################################################
 ```
