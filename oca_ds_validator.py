@@ -111,7 +111,7 @@ class OCADataSetErr:
             self.get_err_col(first_col)
         print()
 
-    # Update the problematic column and row information.
+    # Updates the problematic column and row information.
     def update_err(self):
         for ec in self.format_err.errs:
             for i in self.format_err.errs[ec]:
@@ -123,12 +123,14 @@ class OCADataSetErr:
                 self.err_rows.add(i)
             if self.ecode_err.errs[ec]:
                 self.err_cols.add(ec)
-
+    # Returns the error detail dictionary for format values.
     def get_format_err(self):
         return self.format_err.errs
+    # Returns the error detail dictionary for entry codes.
     def get_ecode_err(self):
         return self.ecode_err.errs
 
+    # Prints the error detail for a certain column.
     def get_err_col(self, attr_name):
         self.update_err()
         if not self.err_cols:
@@ -265,18 +267,23 @@ class OCABundle:
                 if not pd.isna(data_entry):
                     data_entry = str(data_entry)
                 elif attr_conformance:
+                    # A missing mandatory column.
                     rslt.errs[attr][i] = MISSING_MSG
                     continue
                 else:
+                    # An empty data entry.
                     data_entry = ""
 
                 if "Array" in attr_type:
+                    # Array Attrubutes
                     try:
                         data_arr = json.loads(data_entry)
                     except json.decoder.JSONDecodeError:
+                        # Not a valid JSON format string.
                         rslt.errs[attr][i] = NOT_A_LIST_MSG
                         continue
                     if type(data_arr) != list:
+                        # Not a valid JSON array.
                         rslt.errs[attr][i] = NOT_A_LIST_MSG
                         continue
                     for data_item in data_arr:
@@ -284,6 +291,7 @@ class OCABundle:
                             rslt.errs[attr][i] = FORMAT_ERR_MSG
                             break
                 elif not match_format(attr_type, attr_format, data_entry):
+                    # Non-array Attributes
                     rslt.errs[attr][i] = FORMAT_ERR_MSG
                 else:
                     pass
@@ -294,10 +302,12 @@ class OCABundle:
         rslt = OCADataSetErr.EntryCodeErr() 
         attr_entry_codes = self.get_entry_codes()
         for attr in attr_entry_codes:
+            # Validates all attribute with entry codes.
             rslt.errs[attr] = {}
             for i in range(len(data_set.data)):
                 data_entry = data_set.data[attr][i]
                 if str(data_entry) not in attr_entry_codes[attr]:
+                    # Not one of the entry code.
                     rslt.errs[attr][i] = EC_ERR_MSG
         return rslt
 
@@ -330,6 +340,8 @@ class OCABundle:
             self.flagged_alarm()
         if enable_version_alarm:
             self.version_alarm()
+        
+        # Generate OCADataSetErr result object.
         rslt = OCADataSetErr()
         rslt.attr_err = self.validate_attribute(data_set)
         rslt.format_err = self.validate_format(data_set)
@@ -339,6 +351,7 @@ class OCABundle:
 
 def match_datetime(pattern, data_str):
 
+    # Converts the ISO 8601 format into Python DateTime format.
     def iso2py(iso_str):
         iso_conv = {
             "YYYY": "%Y", "MM": "%m", 
@@ -356,16 +369,23 @@ def match_datetime(pattern, data_str):
         return True
 
     if "/" in pattern:
+        # Time intervals: <start>/<end>, <start>/<duration>, or <duration>/<end>. 
+        # Repeating intervals: R(n)/<interval>.
+        # In both cases, validates two parts seperately.
         if "/" not in data_str:
             return False
         else:
             return match_datetime(pattern.split("/")[0], data_str.split("/")[0]) and \
                    match_datetime(pattern.split("/")[1], data_str.split("/")[1])
     elif pattern[0] == "P" or pattern[0] == "R":
+        # Durations or repeating interval heads. 
+        # Match the string with n's replaced with actual numbers.
         return match_regex("^" + pattern.replace("n", "[0-9]+") + "$", data_str)
     else:
         pattern = iso2py(pattern)
         try:
+            # Python DateTime format matching. 
+            # If formats not matched, an exception will be raised.
             datetime.strptime(data_str, pattern)
         except:
             return False
@@ -374,9 +394,11 @@ def match_datetime(pattern, data_str):
 def match_regex(pattern, data_str):
     if not pattern:
         return True
+    # Regular expression matching with re.
     return bool(re.search(pattern, data_str))
 
 def match_boolean(data_str):
+    # Idealy only "true" and "false" would pass.
     return data_str in ["True",  "true",  "TRUE",  "T", "1", "1.0", 
                         "False", "false", "FALSE", "F", "0", "0.0"]
 
@@ -391,18 +413,18 @@ def match_format(attr_type, pattern, data_str):
         return True
 
 
-ds_path = "./data_entry.xlsx"
-bundle_path = "./bundle.zip"
-
-
 if __name__ == "__main__":
-    test_bd = OCABundle(bundle_path)
-    test_ds = OCADataSet.from_path(ds_path)
-    # test_rslt = test_bd.validate(test_ds)
-    test_rslt = test_bd.validate(test_ds, True, False, False)
     
-    test_rslt.overview()
-    test_rslt.first_err_col()
+    ds_path = "./data_entry.xlsx"
+    bundle_path = "./bundle.zip"
+    
+    # test_bd = OCABundle(bundle_path)
+    # test_ds = OCADataSet.from_path(ds_path)
+    # test_rslt = test_bd.validate(test_ds)
+    # test_rslt = test_bd.validate(test_ds, True, False, False)
+    
+    # test_rslt.overview()
+    # test_rslt.first_err_col()
     # test_rslt.get_err_col("num_arr_attr")
     
     # print(test_rslt.get_format_err())
