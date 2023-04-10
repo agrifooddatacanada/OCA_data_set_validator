@@ -307,7 +307,7 @@ class OCABundle:
             for i in range(len(data_set.data)):
                 data_entry = data_set.data[attr][i]
                 if str(data_entry) not in attr_entry_codes[attr]:
-                    # Not one of the entry code.
+                    # Not one of the entry codes.
                     rslt.errs[attr][i] = EC_ERR_MSG
         return rslt
 
@@ -371,7 +371,7 @@ def match_datetime(pattern, data_str):
     if "/" in pattern:
         # Time intervals: <start>/<end>, <start>/<duration>, or <duration>/<end>. 
         # Repeating intervals: R(n)/<interval>.
-        # In both cases, validates two parts seperately.
+        # In both cases, validates two parts separately.
         if "/" not in data_str:
             return False
         else:
@@ -385,7 +385,7 @@ def match_datetime(pattern, data_str):
         pattern = iso2py(pattern)
         try:
             # Python DateTime format matching. 
-            # If formats not matched, an exception will be raised.
+            # If formats are not matched, an exception will be raised.
             datetime.strptime(data_str, pattern)
         except:
             return False
