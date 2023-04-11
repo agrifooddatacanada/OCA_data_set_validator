@@ -39,7 +39,8 @@ test_rslt = test_bundle.validate(test_data)
 #     {'attribute_with_format_error_on_row_0': {0: 'Format mismatch.'}, 
 #      'array_attribute_without_array_data_on_row_0': {0: 'Valid array required.'}, 
 #      'attribute_with_format_error_on_row_42': {42: 'Format mismatch.'}, 
-#      'attribute_with_errors_on_row_0_and_1': {0: 'Format mismatch.', 1: 'Valid array required.'}, 
+#      'attribute_with_errors_on_row_0_and_1': {0: 'Format mismatch.', 
+#                                               1: 'Valid array required.'}, 
 #      'mandatory_attribute_with_missing_data': {0: 'Missing mandatory attribute.'},
 #      'attribute_without_error': {}}
 #   ecode_err:  # Not matching any of the entry codes
@@ -84,7 +85,8 @@ test_rslt.first_err_col()
 # Prints the information of some certain column.
 test_rslt.get_err_col("attribute_with_format_error_on_row_42")  
 #########################################################################################
-# Format error(s) would occur in the following rows of column attribute_with_format_error_on_row_42:
+# Format error(s) would occur in the following rows of column 
+# attribute_with_format_error_on_row_42:
 # row 42 : Format mismatch.
 # No entry code error found in the column.
 #########################################################################################
