@@ -101,7 +101,9 @@ test_rslt.get_ecode_err()
 
 ## Development Status
 
-Currently, this script is developed for the validation of the following [OCA attribute types](https://oca.colossi.network/specification/#attribute-type): 
+This script is created with support by [Agri-food Data Canada](https://agrifooddatacanada.ca/), funded by [CFREF](https://www.cfref-apogee.gc.ca/) through the [Food from Thought grant](https://foodfromthought.ca/) held at the [University of Guelph](https://www.uoguelph.ca/). Currently, we do not provide any warranty of any kind regarding the accuracy, security, completeness or reliability of this script or any of its parts.
+
+At the moment, this script is developed for the validation of the following [OCA attribute types](https://oca.colossi.network/specification/#attribute-type): 
 - Text (with regular expressions)
 - DateTime (with ISO 8601 formats)
 - Array[Type]; for any Types that are not mentioned above, only the validness of the array will be checked. 
@@ -114,4 +116,11 @@ JSON data types are **NOT** validated due to the type coercion while importing E
 
 Any validation errors other than the above are **NOT** guaranteed to be filtered by this script. Please feel free to contact us with any suggestions for future development.
 
-You could also found a well-developed [OCA Validator](https://github.com/THCLab/oca-conductor) by [The Human Colossus Lab](https://github.com/THCLab) (Rust required).
+You could also find a well-developed [OCA Validator](https://github.com/THCLab/oca-conductor) by [The Human Colossus Lab](https://github.com/THCLab) (Rust required).
+
+
+## License
+
+EUPL (European Union Public License), version 1.2 
+
+We have distilled the most crucial license specifics to make your adoption seamless: [see here for details](https://github.com/THCLab/licensing).

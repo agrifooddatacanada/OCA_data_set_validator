@@ -10,9 +10,19 @@ import re
 ##############################################################################
 # Author: Xingjian Xu from Agri-food Data Canada 
 #                          (https://agrifooddatacanada.ca/)
-# GitHub Repo: https://github.com/agrifooddatacanada/OCA_data_set_validator
-# OCA Spec Version: v1.0.0
+# 
+# Created with support by Agri-food Data Canada, funded by CFREF through the 
+# Food from Thought grant held at the University of Gueph.
+# We do not provide any warranty of any kind regarding the accuracy, security,
+# completeness or reliability of this script or any of its parts.
+# 
+# You can redistribute and/or modify this script under the terms of the EUPL
+# (European Union Public License), version 1.2, as published by the Human 
+# Colossus Foundation (https://humancolossus.foundation/).
 ##############################################################################
+
+# The version number of the OCA Technical Specification which this script is
+# developed for. See https://oca.colossi.network/specification/
 OCA_VERSION = "1.0"
 
 # Names of OCA bundle dictionary keys.
