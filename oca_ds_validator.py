@@ -101,11 +101,13 @@ class OCADataSetErr:
     # errors in a few attributes.
     def overview(self):
         self.update_err()
-        if (not self.err_cols) and (not self.err_rows):
+        if (not self.attr_err.errs) and 
+           (not self.err_cols) and 
+           (not self.err_rows):
             print("No error was found.")
-        elif self.attr_err.errs:
+        if self.attr_err.errs:
             print("Attribute error. Check OCA bundle for", attr_err.errs, ".")
-        else:
+        if self.err_cols or self.err_rows:
             print("Found", len(self.err_rows), 
                   "problematic row(s) in the following column(s):", self.err_cols)  
         print()
