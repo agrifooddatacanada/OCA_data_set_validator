@@ -258,6 +258,8 @@ class OCABundle:
             return ecodes
 
     # Validates the number and name of all attributes.
+    # TODO: Allow either the data set or the schema bundle to have more attributes.
+    #       Print warnings instead.
     def validate_attribute(self, data_set: OCADataSet) -> OCADataSetErr.AttributeErr:
         rslt = OCADataSetErr.AttributeErr()
         rslt.errs = [i for i in list(data_set.data) if i not in self.get_attributes()]
