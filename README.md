@@ -34,7 +34,10 @@ test_rslt = test_bundle.validate(test_data)
 #########################################################################################
 # Example of a possible test_rslt:
 #   attr_err:
-#     ['missing_attribute', 'misnamed_attribute']
+#     [('missing_attribute', 
+#       'Missing attribute (attribute not found in the data set).'), 
+#      ('unmatched_attribute', 
+#       'Unmatched attribute (attribute not found in the OCA Bundle).')]
 #   format_err:
 #     {'attribute_with_format_error_on_row_0': {0: 'Format mismatch.'}, 
 #      'array_attribute_without_array_data_on_row_0': {0: 'Valid array required.'}, 
@@ -61,10 +64,13 @@ There are three optional boolean arguments to control the message printed.
 The errors of the data set is stored in the generated `OCADataSetErr` class.
 
 ```Python
-# Prints a brief summary of errors.
+# Prints a brief summary of errors. 
 test_rslt.overview()  
 #########################################################################################
-# Found 3 problematic row(s) in the following column(s): 
+# Attribute error. 
+# {'missing_attribute'} found in the OCA Bundle but not in the data set; 
+# {'unmatched_attribute'} found in the data set but not in the OCA Bundle.
+# Found 3 problematic row(s) in the following attribute(s): 
 # {'attribute_with_format_error_on_row_0', 
 #  'array_attribute_without_array_data_on_row_0', 
 #  'attribute_with_format_error_on_row_42', 
