@@ -25,6 +25,10 @@ import re
 # developed for. See https://oca.colossi.network/specification/
 OCA_VERSION = "1.0"
 
+# When more than ERR_THRESHOLD problematic attributes are found, show count
+# number instead of attribute names. 
+ERR_THRESHOLD = 5
+
 # Names of OCA bundle dictionary keys.
 # Do not change unless there are any key errors.
 META_FILE = "meta.json"
@@ -46,6 +50,8 @@ FLAG_KEY = "flagged_attributes"
 DATA_ENTRY_SHEET_KEY = "schema conformant data"
 
 # Error messages. For text notices only.
+ATTR_UNMATCH_MSG = "Unmatched attribute (attribute not found in the OCA Bundle)."
+ATTR_MISSING_MSG = "Missing attribute (attribute not found in the data set)."
 MISSING_MSG = "Missing mandatory attribute."
 NOT_A_LIST_MSG = "Valid array required."
 FORMAT_ERR_MSG = "Format mismatch."
@@ -94,6 +100,9 @@ class OCADataSetErr:
         self.format_err = OCADataSetErr.FormatErr()
         self.ecode_err = OCADataSetErr.EntryCodeErr() 
 
+        self.missing_attr = set()
+        self.unmatched_attr = set()
+
         self.err_cols = set()
         self.err_rows = set()
 
@@ -106,10 +115,23 @@ class OCADataSetErr:
             (not self.err_rows)):
             print("No error was found.")
         if self.attr_err.errs:
-            print("Attribute error. Check OCA bundle for", attr_err.errs, ".")
+            if len(self.missing_attr) > ERR_THRESHOLD:
+                missing_attr_msg = str(len(self.missing_attr)) + " attributes"
+            else:
+                missing_attr_msg = str(self.missing_attr)
+            if len(self.unmatched_attr) > ERR_THRESHOLD:
+                unmatched_attr_msg = str(len(self.unmatched_attr)) + " attributes"
+            else:
+                unmatched_attr_msg = str(self.unmatched_attr)
+            print("Attribute error.", 
+                  missing_attr_msg, "found in the OCA Bundle but not in the data set;",
+                  unmatched_attr_msg, "found in the data set but not in the OCA Bundle.")
         if self.err_cols or self.err_rows:
-            print("Found", len(self.err_rows), 
-                  "problematic row(s) in the following column(s):", self.err_cols)  
+            if len(self.err_cols) > ERR_THRESHOLD:
+                err_cols_msg = str(len(self.err_cols)) + " attributes"
+            else:
+                err_cols_msg = "the following attribute(s): " + str(self.err_cols)
+            print("Found", len(self.err_rows), "problematic row(s) in", err_cols_msg)
         print()
 
     # Detailed error information about the first column with errors.
@@ -125,16 +147,25 @@ class OCADataSetErr:
 
     # Updates the problematic column and row information.
     def update_err(self):
-        for ec in self.format_err.errs:
-            for i in self.format_err.errs[ec]:
-                self.err_rows.add(i)
-            if self.format_err.errs[ec]:
-                self.err_cols.add(ec)
-        for ec in self.ecode_err.errs:
-            for i in self.ecode_err.errs[ec]:
-                self.err_rows.add(i)
-            if self.ecode_err.errs[ec]:
-                self.err_cols.add(ec)
+        for i in self.attr_err.errs:
+            if i[1] == ATTR_MISSING_MSG:
+                self.missing_attr.add(i[0])
+            elif i[1] == ATTR_UNMATCH_MSG:
+                self.unmatched_attr.add(i[0])
+        for i in self.format_err.errs:
+            for j in self.format_err.errs[i]:
+                self.err_rows.add(j)  # problematic data rows
+            if self.format_err.errs[i]:
+                self.err_cols.add(i)  # problematic attribute
+        for i in self.ecode_err.errs:
+            for j in self.ecode_err.errs[i]:
+                self.err_rows.add(j)  # problematic data rows
+            if self.ecode_err.errs[i]:
+                self.err_cols.add(i)  # problematic attribute
+
+    # Returns the error detail list for missing or unmatched attributes.
+    def get_attr_err(self):
+        return self.attr_err.errs
     # Returns the error detail dictionary for format values.
     def get_format_err(self):
         return self.format_err.errs
@@ -166,8 +197,8 @@ class OCADataSetErr:
 class OCABundle:
 
     # Load an OCA bundle.
-    # path_str: String. File path to the OCA bundle zip file. 
-    #           Both kinds of slash works. 
+    # bundle_path_str: String. File path to the OCA bundle zip file. 
+    #                  Both kinds of slash works. 
     def __init__(self, bundle_path_str):
         
         self.meta = {}
@@ -260,11 +291,10 @@ class OCABundle:
             return ecodes
 
     # Validates the number and name of all attributes.
-    # TODO: Allow either the data set or the schema bundle to have more attributes.
-    #       Print warnings instead.
     def validate_attribute(self, data_set: OCADataSet) -> OCADataSetErr.AttributeErr:
         rslt = OCADataSetErr.AttributeErr()
-        rslt.errs = [i for i in list(data_set.data) if i not in self.get_attributes()]
+        rslt.errs += ([(i, ATTR_UNMATCH_MSG) for i in list(data_set.data) if i not in self.get_attributes()])
+        rslt.errs += ([(i, ATTR_MISSING_MSG) for i in self.get_attributes() if i not in list(data_set.data)])
         return rslt
 
     # Validates all attributes for format values.
@@ -277,7 +307,10 @@ class OCABundle:
             attr_format = self.get_attribute_format(attr)
             attr_conformance = self.get_attribute_conformance(attr)
             for i in range(len(data_set.data)):
-                data_entry = data_set.data[attr][i]
+                try:
+                    data_entry = data_set.data[attr][i]
+                except KeyError:
+                    continue
                 if not pd.isna(data_entry):
                     data_entry = str(data_entry)
                 elif attr_conformance:
@@ -425,22 +458,4 @@ def match_format(attr_type, pattern, data_str):
         return match_boolean(data_str)
     else:
         return True
-
-
-if __name__ == "__main__":
-    
-    ds_path = "./data_entry.xlsx"
-    bundle_path = "./bundle.zip"
-    
-    # test_bd = OCABundle(bundle_path)
-    # test_ds = OCADataSet.from_path(ds_path)
-    # test_rslt = test_bd.validate(test_ds)
-    # test_rslt = test_bd.validate(test_ds, True, False, False)
-    
-    # test_rslt.overview()
-    # test_rslt.first_err_col()
-    # test_rslt.get_err_col("num_arr_attr")
-    
-    # print(test_rslt.get_format_err())
-    # print(test_rslt.get_ecode_err())
 

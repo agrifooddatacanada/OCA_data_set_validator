@@ -96,7 +96,7 @@ test_rslt.get_err_col("attribute_with_format_error_on_row_42")
 ```Python
 # Get objects of full error details. 
 # You may find it useful for data visualization or further analysis.
-test_rslt.attr_err
+test_rslt.get_attr_err()
 test_rslt.get_format_err()
 test_rslt.get_ecode_err()
 ```
