@@ -123,7 +123,7 @@ class OCADataSetErr:
                 unmatched_attr_msg = str(len(self.unmatched_attr)) + " attributes"
             else:
                 unmatched_attr_msg = str(self.unmatched_attr)
-            print("Attribute error.", 
+            print("Attribute error found.", 
                   missing_attr_msg, "found in the OCA Bundle but not in the data set;",
                   unmatched_attr_msg, "found in the data set but not in the OCA Bundle.")
         if self.err_cols or self.err_rows:
@@ -192,6 +192,7 @@ class OCADataSetErr:
                     print("row", row, ":", self.get_ecode_err()[attr_name][row])
             else:
                 print("No entry code error found in the column.")
+        print()
 
 # A loaded OCA bundle from OCA zip files. 
 class OCABundle:
