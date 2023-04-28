@@ -361,7 +361,7 @@ class OCABundle:
 
     # Print warning messages for any flagged attributes.
     def flagged_alarm(self):
-        if FLAG_KEY in self.get_file(CB_KEY):
+        if FLAG_KEY in self.get_file(CB_KEY) and self.get_file(CB_KEY)[FLAG_KEY]:
             print("Contains flagged data. Please check the following attribute(s):")
             for attr in self.get_file(CB_KEY)[FLAG_KEY]:
                 print(attr)
@@ -369,12 +369,15 @@ class OCABundle:
 
     # Prints warning messages for any overlays with a different version number.
     def version_alarm(self):
+        version_error = False
         for overlay_file in self.files_dict:
             file_ver = self.get_file_version(overlay_file)
             if file_ver and file_ver != OCA_VERSION:
+                version_error = True
                 print("Warning: overlay", overlay_file, 
                       "has a different OCA specification version.")
-        print()
+        if version_error:
+            print()
 
     # Validates all attributes.
     def validate(self, data_set: OCADataSet,
