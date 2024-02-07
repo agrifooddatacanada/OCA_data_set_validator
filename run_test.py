@@ -1,22 +1,21 @@
-from oca_ds_validator import OCADataSet, OCADataSetErr, OCABundle
+from oca_ds_validator.oca_ds_validator import OCABundle, OCADataSet
 
-test_bd = OCABundle("./test_bundle.zip")
-valid_ds = OCADataSet.from_path("./valid_data_set.csv")
-error_ds = OCADataSet.from_path("./error_data_set.csv")
+test_bd = OCABundle("./tests_files/test_bundle.json")
+valid_ds = OCADataSet.from_path("./tests_files/data_entry_example.xlsx")
 
 valid_rslt = test_bd.validate(valid_ds)
-valid_rslt.overview() 
-# No error was found.
+valid_rslt.overview()
+# Found 5 problematic row(s) in the following attribute(s): {'Breed'}
 
-error_rslt = test_bd.validate(error_ds)
-error_rslt.overview()
-# Attribute error found. {'analysisDate'} found in the OCA Bundle but not in 
-# the data set; {'message'} found in the data set but not in the OCA Bundle.
-# Found 5 problematic row(s) in the following attribute(s): {'location', 
-# 'insectWeight', 'insectCount', 'collectionDate', 'insectType'}
+# valid_rslt.first_err_col()
+# Format error(s) would occur in the following row(s):
+# row 0 :  Entry code format mismatch (manually fix the attribute format). Supported format for entry code is: [A-Z]{15}.
+# row 1 :  Entry code format mismatch (manually fix the attribute format). Supported format for entry code is: [A-Z]{15}.
+# row 2 :  Entry code format mismatch (manually fix the attribute format). Supported format for entry code is: [A-Z]{15}.
+# row 3 :  Entry code format mismatch (manually fix the attribute format). Supported format for entry code is: [A-Z]{15}.
+# row 4 :  Entry code format mismatch (manually fix the attribute format). Supported format for entry code is: [A-Z]{15}.
 
-
-# print(error_rslt.get_attr_err())
-# print(error_rslt.get_format_err())
-# print(error_rslt.get_ecode_err())
-
+# print(valid_rslt.get_attr_err())
+# print(valid_rslt.get_format_err())
+# print(valid_rslt.get_ecode_err())
+# print(valid_rslt.get_char_encode_err())
