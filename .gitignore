@@ -2,6 +2,3 @@
 __pycache__/*
 *.swp
 test.*
-zip_oca_ds_validator/
-oca_ds_validator/__pycache__/*
-setup.py
