@@ -1,7 +1,7 @@
-from oca_ds_validator.oca_ds_validator import OCABundle, OCADataSet
+from oca_ds_validator import OCABundle, OCADataSet
 
-test_bd = OCABundle("./tests_files/test_bundle.json")
-valid_ds = OCADataSet.from_path("./tests_files/data_entry_example.xlsx")
+test_bd = OCABundle("test_bundle.json")
+valid_ds = OCADataSet.from_path("test_data_entry_example.xlsx")
 
 valid_rslt = test_bd.validate(valid_ds)
 valid_rslt.overview()

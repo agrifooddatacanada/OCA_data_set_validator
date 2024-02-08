@@ -1,5 +1,5 @@
 
 __pycache__/*
 *.swp
-test.*
-setup.py
+pyproject.toml
+dist/*

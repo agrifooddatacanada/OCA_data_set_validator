@@ -14,7 +14,9 @@ This is a Python package for validating [Overlays Capture Architecture (OCA)](ht
 ## Usage
 
 ### Installation
-Install the package by typing `pip install oca_ds_validator` to the console. Then you could import the classes from any Python scripts.
+Install the package by typing `pip install oca-ds-validator==0.0.2` to the console. Then you could import the classes from any Python scripts.
+
+- The package can be found here: [oca_ds_validator](https://pypi.org/project/oca-ds-validator/0.0.2/)
 
 ### Validation steps
 1. Import the OCA Bundle using `OCABundle(path)`.
